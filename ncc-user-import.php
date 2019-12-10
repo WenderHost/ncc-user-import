@@ -10,6 +10,7 @@ if( ! file_exists( $filename ) )
 $row = 1;
 $errors = [];
 $emails = [];
+$created_users = 0;
 $existing_users = 0;
 if( ( $handle = fopen( $filename, 'r' ) ) !== false ){
   while( ( $data = fgetcsv( $handle, 2048 ) ) !== false ){
@@ -45,7 +46,7 @@ if( ( $handle = fopen( $filename, 'r' ) ) !== false ){
 
   // Create the Users
   foreach( $users as $user ){
-    if( email_exists( $user['email'] ) ){
+    if( username_exists( $user['email'] ) || email_exists( $user['email'] ) ){
       $existing_users++;
       continue;
     }
@@ -53,16 +54,25 @@ if( ( $handle = fopen( $filename, 'r' ) ) !== false ){
     $user_id = wp_insert_user([
       'user_pass' => wp_generate_password( 12 ),
       'user_login' => $user['email'],
-      'user_email' => $user['email'],
       'display_name' => $user['firstname'],
       'first_name' => $user['firstname'],
       'last_name' => $user['lastname'],
       'role' => 'subscriber',
     ]);
     if( $user_id )
+      wp_update_user([
+      'ID' => $user_id,
+      'user_email' => $user['email'],
+    ]);
+    $created_users++;
+
+    if( 1 == $created_users )
+      WP_CLI::line("\n" . str_repeat('-', 20 ) . ' NEW USERS ' . str_repeat('-', 20 ) );
+    if( $user_id )
       WP_CLI::success( 'Created user: ' . $user['firstname'] . ' ' . $user['lastname'] . ' (' . $user['email'] . ').' );
   }
 
+  WP_CLI::line("\n" . str_repeat('-', 20 ) . ' FILE STATS ' . str_repeat('-', 20 ) );
   WP_CLI::success('Opened `' . basename( $filename ) . '` with ' . $row . ' lines.');
   WP_CLI::line('👉 ' . $existing_users . ' users already existed.');
   if( 0 < count( $errors ) ){
