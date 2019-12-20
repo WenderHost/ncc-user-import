@@ -1,4 +1,11 @@
 <?php
+/**
+ * This file implements NCC user import.
+ *
+ * @author     Michael Wender
+ * @since      2019
+ * @version    1.0.0
+ */
 
 if( ! isset( $args[0] ) || empty( $args[0] ) )
   WP_CLI::error('Please provide a filename as the first positional argument to this script.');
